@@ -1,0 +1,33 @@
+1. Reduce the grid to a 3D approach, we will just fix one n for both factor,
+for example bias_q.py and liquidity_premium_z.py, both of them have the argument
+n windows, so during optimization part we will do with the same n, and then 
+directional factors like bias_q or even cci or vwap bias we will make it
+symetrics, meaning for example if is rank models, it will be 0.85 and then 0.15
+the other side, or let say z score model, it will be +3 and -3 on the opposite 
+side. And lastly is the confirmation factor like liquidity_premium_z, turnover_mean_z,
+exhaustion mode, etcc, those we just set one logical score thats it, and then we will
+do a "greater"/"lesser" configuration for it.
+
+2. All the params with the 3d approach will only be tested on just 2020-01-01 to
+2022-12-31.Then using the plateur mode we make sure the results hovers the same around
+the same range of params or maybe we could use bayesian to do it instead of
+just pure grid search(taking best 5 combinations or maybe up to 10). 
+Then only we do a 12 months insample + 3 months outsample. I plan to do it
+from 2023-01-01 to 2023-12-31 for first fold insample then 2024-01-01 to
+2024-03-31 for outsample then we move one month forward from 2023-02-01 with the same
+12months + 3 months approach until when the final fold end date of outsample hits 2026-06-30 or basically
+the end of the data set, which currently i think is 2026-06-26.
+
+3. After doing multiple rounds of in/out sample, we will use monthly returns 
+to see if the returns are volatile and how it sustains through different markets
+like bear/bull, major event etcc like covid and war etcc. But I think monthly returns
+metrics we can just add it in metrics.py. Then we validate from this if this alpha
+is good to proceed.
+
+4. We will run a final stress test where we will delay an interval to see if 
+the alpha can still be profitable in a stressful enviroment.
+
+5. Monte Carlo approach to see how this alpha behave with different price path, and
+because of different price path, the factor will calculate out a different value compared
+to those that the data(ohlcv, turnover) where it already happened and is fixed, we 
+purposely tweak those price path and see how this alpha survive.
