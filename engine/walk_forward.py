@@ -6,7 +6,7 @@ from typing import Generator, Dict, Tuple
 
 class WalkForwardSplitter:
 
-    def __init__(self, df: pd.DataFrame, is_months: int = 12, oos_months: int = 3, step_months:int = None):
+    def __init__(self, df: pd.DataFrame, is_months: int = 12, oos_months: int = 6, step_months:int = None):
         if not isinstance(df.index, pd.DatetimeIndex):
             raise ValueError("DataFrame index must be a DatetimeIndex for calendar-based walk-forward splits.")
         
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     mock_df = pd.DataFrame(np.random.randn(len(dates)), index=dates, columns=["close"])
     
     # 12 months In-Sample, 3 months Out-of-Sample
-    splitter = WalkForwardSplitter(mock_df, is_months=12, oos_months=3, step_months=1)
+    splitter = WalkForwardSplitter(mock_df, is_months=12, oos_months=6, step_months=1)
     
     for fold in splitter.get_slices():
         print(f"Fold {fold['fold']}:")
