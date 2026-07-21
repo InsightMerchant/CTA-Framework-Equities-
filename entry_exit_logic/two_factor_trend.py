@@ -10,6 +10,7 @@ def two_factor_trend(
         conf_factor: str, conf_thresh: float, conf_mode: str = 'greater',
         exit_mode: str = 'conf_cross_zero',
         exit_bars: int = 4,
+        exit_threshold: float = 0,
 ) -> pd.Series:
     """
     Trend-following two-factor logic with configurable exit.
@@ -40,49 +41,49 @@ def two_factor_trend(
     long_signal = long_dir_cond & conf_cond
     short_signal = short_dir_cond & conf_cond
 
+    long_arr = long_signal.values
+    short_arr = short_signal.values
+    conf_values = df[conf_factor].values
+    n_rows = len(df)
+    position = np.zeros(n_rows)
+
     # 4. Build position array based on exit mode
     if exit_mode == 'flip':
-        signals = pd.Series(np.nan, index=df.index)
-        signals = np.where(long_signal, 1, signals)
-        signals = np.where(short_signal, -1, signals)
-        position = pd.Series(signals, index=df.index).ffill().fillna(0)
+        signals = np.fullI(n_rows, np.nan)
+        signals[long_arr] = long_signal.values
+        signals[short_arr] = short_signal.values
+        return pd.Series(signals, index=df.index).ffill().fillna()
 
     elif exit_mode == 'conf_cross_zero':
-        position = np.zeros(len(df))
         current_pos = 0
-        conf_values = df[conf_factor].values
-
-        for i in range(len(df)):
+        for i in range(n_rows):
             # Only enter when flat
             if current_pos == 0:
-                if long_signal.iloc[i]:
+                if long_arr[i]:
                     current_pos = 1
-                elif short_signal.iloc[i]:
+                elif short_arr[i]:
                     current_pos = -1
 
             # Exit when conf crosses zero
             if current_pos != 0:
-                if conf_mode == 'greater' and conf_values[i] <= 0:
+                if conf_mode == 'greater' and conf_values[i] <= exit_threshold:
                     current_pos = 0
-                elif conf_mode == 'lesser' and conf_values[i] >= 0:
+                elif conf_mode == 'lesser' and conf_values[i] >= exit_threshold:
                     current_pos = 0
 
             position[i] = current_pos
 
-        position = pd.Series(position, index=df.index)
-
     elif exit_mode == 'fixed_bars':
-        position = np.zeros(len(df))
         bars_in_trade = 0
         current_pos = 0
 
-        for i in range(len(df)):
+        for i in range(n_rows):
             # Only enter when flat
             if current_pos == 0:
-                if long_signal.iloc[i]:
+                if long_arr[i]:
                     current_pos = 1   # Trend: go long
                     bars_in_trade = 0
-                elif short_signal.iloc[i]:
+                elif short_arr[i]:
                     current_pos = -1  # Trend: go short
                     bars_in_trade = 0
 
@@ -95,9 +96,7 @@ def two_factor_trend(
 
             position[i] = current_pos
 
-        position = pd.Series(position, index=df.index)
-
     else:
         raise ValueError("exit_mode must be 'flip', 'conf_cross_zero', or 'fixed_bars'")
 
-    return position
+    return pd.Series(position, index=df.index)
